@@ -30,7 +30,7 @@ lectures.
 - error popup with short custom message
 - set good size + show up in center of screen
 - make the pages scrollable + resizable\* as well
-- [save pic and cry files in a temp folder / delete them on next launch](https://superuser.com/questions/1569872/what-are-temp-folders-used-for-in-windows-10)
+- save pic and cry files in a `tmp` folder next to app
 
 1. Show spinner
 2. Load all the pokemon names, URLs + imgs
