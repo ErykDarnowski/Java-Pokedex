@@ -23,3 +23,23 @@ lectures.
 	- Abilities
 	- [Picture (write algo to get best one 'official-artwork' > 'home' > 'sprite' and discriminate against GIFs + empty)](decidueye-hisui)
 	- [Playable cry sound\*](https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/1.ogg)
+
+## Plan
+
+- `X` in right corners to exit
+- error popup with short custom message
+- set good size + show up in center of screen
+- make the pages scrollable + resizable\* as well
+- [save pic and cry files in a temp folder / delete them on next launch](https://superuser.com/questions/1569872/what-are-temp-folders-used-for-in-windows-10)
+
+1. Show spinner
+2. Load all the pokemon names, URLs + imgs
+3. Sort alphabetically
+4. Hide spinner + show search UI
+5. On keypress start filtering out loaded content and sorting alphabetically
+<!-- -->
+6. On pokemon click open details popup
+7. Show spinner
+8. Load in data from special URL + download cry
+9. Format + fix data
+10. Hide spinner + show detail UI (use prev downloaded pic)
