@@ -31,6 +31,8 @@ lectures.
 - set good size + show up in center of screen
 - make the pages scrollable + resizable\* as well
 - save pic and cry files in a `tmp` folder next to app
+- [spinner animation](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
+- [do the UI using the IDE tools](https://www.youtube.com/watch?v=0d_IIXaV59s)
 
 1. Show spinner
 2. Load all the pokemon names, URLs + imgs
