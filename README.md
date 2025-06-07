@@ -18,7 +18,8 @@ lectures.
 - [Info](https://pokeapi.co/api/v2/pokemon/1/)
 	- Name #ID
 	- Species
-	- Height / Weight (convert by dividing by `10` - `m / kg`)
+	- Height
+	- Weight (convert by dividing by `10` - `m / kg`)
 	- Base stats
 	- Abilities
 	- [Picture (write algo to get best one 'official-artwork' > 'home' > 'sprite' and discriminate against GIFs + empty)](decidueye-hisui)
