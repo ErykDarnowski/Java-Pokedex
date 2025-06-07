@@ -31,8 +31,15 @@ lectures.
 - set good size + show up in center of screen
 - make the pages scrollable + resizable\* as well
 - save pic and cry files in a `tmp` folder next to app
-- [spinner animation](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
+- [pokedex colors inspired\*](https://www.google.com/search?q=pokedex+device&ie=UTF-8#vhid=zqRulov4memzIM&vssid=_Bf5DaPrhEpeFxc8PiePgkQU_44)
 - [do the UI using the IDE tools](https://www.youtube.com/watch?v=0d_IIXaV59s)
+- [spinner animation](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
+	- <https://loading.io/>
+	- <https://icons8.com/preloaders/>
+		- <https://icons8.com/preloaders/en/circular/spinner-5/>
+		- <https://icons8.com/preloaders/en/miscellaneous/search/>
+		- <https://icons8.com/preloaders/en/miscellaneous/settings/>
+		- <https://icons8.com/preloaders/en/miscellaneous/hourglass/>
 
 1. Show spinner
 2. Load all the pokemon names, URLs + imgs
