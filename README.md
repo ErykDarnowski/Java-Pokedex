@@ -23,8 +23,3 @@ lectures.
 	- Abilities
 	- [Picture (write algo to get best one 'official-artwork' > 'home' > 'sprite' and discriminate against GIFs + empty)](decidueye-hisui)
 	- [Playable cry sound\*](https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/1.ogg)
-
-## [APIs](https://github.com/public-apis/public-apis#geocoding)
-
-- [Pokemon](https://pokeapi.co/)
-- [Animal Crossing](https://api.nookipedia.com/doc)
