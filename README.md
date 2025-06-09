@@ -32,6 +32,7 @@ lectures.
 - set good size + show up in center of screen
 - make the pages scrollable + resizable\* as well
 - save pic and cry files in a `tmp` folder next to app
+- implement connection, status, content and so on errors
 - [searchbar](https://stackoverflow.com/questions/19868287/how-can-i-make-a-search-box-in-java)
 - [pokedex colors inspired\*](https://www.google.com/search?q=pokedex+device&ie=UTF-8#vhid=zqRulov4memzIM&vssid=_Bf5DaPrhEpeFxc8PiePgkQU_44)
 - [do the UI using the IDE tools](https://www.youtube.com/watch?v=0d_IIXaV59s)
