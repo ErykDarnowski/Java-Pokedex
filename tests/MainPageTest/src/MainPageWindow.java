@@ -21,7 +21,6 @@ import java.awt.RenderingHints;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import javax.swing.BorderFactory;
-import static javax.swing.BorderFactory.createEmptyBorder;
 import javax.swing.JTextField;
 import javax.swing.border.AbstractBorder;
 

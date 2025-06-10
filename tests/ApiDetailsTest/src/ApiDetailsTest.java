@@ -1,9 +1,11 @@
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ApiDetailsTest {
@@ -15,14 +17,14 @@ public class ApiDetailsTest {
             // Connect and fetch JSON
             URL url = new URL(apiUrl);
             URLConnection connection = url.openConnection();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-            StringBuilder jsonBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line);
-            }
-            reader.close();
+	    StringBuilder jsonBuilder;
+	    try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+		jsonBuilder = new StringBuilder();
+		String line;
+		while ((line = reader.readLine()) != null) {
+			jsonBuilder.append(line);
+		}
+	    }
 
             // Parse JSON
             JSONObject json = new JSONObject(jsonBuilder.toString());
@@ -98,7 +100,7 @@ public class ApiDetailsTest {
                         imageUrl = fallback;
                     }
                 }
-            } catch (Exception imgEx) {
+            } catch (JSONException imgEx) {
                 System.out.println("Could not retrieve image: " + imgEx.getMessage());
             }
 
@@ -119,7 +121,7 @@ public class ApiDetailsTest {
             System.out.println("\nIMG URL: " + imageUrl);
             System.out.println("CRY URL: " + cryUrl);
 
-        } catch (Exception e) {
+        } catch (IOException | JSONException e) {
             System.out.println("Error fetching or parsing data: " + e);
         }
     }
