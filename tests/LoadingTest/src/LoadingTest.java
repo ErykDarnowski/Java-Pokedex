@@ -1,16 +1,37 @@
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 public class LoadingTest {
 	public static void main(String[] args) {
-	    JFrame frame = new JFrame("Test");
+        try {
+            // Option A: Use the System's default Look and Feel
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-	    ImageIcon loading = new ImageIcon(LoadingTest.class.getResource("/spinner.gif"));
-	    frame.add(new JLabel("loading... ", loading, JLabel.CENTER));
+            // Option B: Use the Cross-Platform (Metal) Look and Feel (default)
+            // UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
 
-	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    frame.setSize(400, 300);
-	    frame.setVisible(true);
+            // Option C: Use a specific L&F (e.g., Nimbus, CDE/Motif, Windows, GTK+)
+            // Note: Availability depends on the OS and Java version
+            // For Nimbus:
+            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+
+        } catch (UnsupportedLookAndFeelException e) {
+            System.err.println("Unsupported Look and Feel: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            System.err.println("Look and Feel class not found: " + e.getMessage());
+        } catch (InstantiationException e) {
+            System.err.println("Error instantiating Look and Feel: " + e.getMessage());
+        } catch (IllegalAccessException e) {
+            System.err.println("Illegal access for Look and Feel: " + e.getMessage());
+        }
+
+        // Create and show the GUI on the Event Dispatch Thread (EDT)
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new LoadingTestWindow();
+            }
+        });
 	}
 }
