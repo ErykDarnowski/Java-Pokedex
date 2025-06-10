@@ -1,0 +1,3 @@
+API: https://pokeapi.co/
+Spinner: https://icons8.com/preloaders/en/miscellaneous/hourglass/
+Logo Pokedex: https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9dex
