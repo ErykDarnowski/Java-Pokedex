@@ -1,4 +1,4 @@
-# README
+# Java Pokedex
 
 ## Idea
 
