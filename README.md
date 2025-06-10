@@ -1,63 +1,36 @@
 # Java Pokedex
 
-## Idea
-
-**Main page with search bar showing names + thumbnails of critters
-and then with each keypresses filtering them out based on present
-characters alphabetically - by name (from the once loaded and
-cached data), then after clicking on critter, opens popup window
-with a few details on the picked critter + it's name and photo).**
-
-Implement spinners and remember about error msgs (simple popup)
-and object oriented programming architecture - based on files from
-lectures.
-
-## Pages
-
-- [Search](https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0)
-- [Info](https://pokeapi.co/api/v2/pokemon/1/)
-	- Name #ID
-	- Species
-	- Height
-	- Weight (convert by dividing by `10` - `m / kg`)
-	- Base stats
-	- Abilities
-	- [Picture (write algo to get best one 'official-artwork' > 'home' > 'sprite' and discriminate against GIFs + empty)](decidueye-hisui)
-	- [Playable cry sound\*](https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/1.ogg)
-
 ## Plan
 
-- `X` in right corners to exit
+1. Show spinner
+2. [Load all the pokemon names, URLs + imgs](https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0)
+3. Sort alphabetically
+4. Hide spinner + show search UI
+5. On each keypress filter out out loaded names (plus sort alphabetically so they don't shift around too much)
+<!-- -->
+6. On pokemon click open details popup
+7. Show spinner
+8. [Load in data from special URL + download cry](https://pokeapi.co/api/v2/pokemon/1/)
+9. Format + display data
+10. Hide spinner + show detail UI (use prev downloaded pic)
+11. On back btn pressed return to prev page
+
+- OOP architecture (based on files from lectures and so on)
 - resize hardcoded pokedex logo
-- error popup with short custom message
-- set good size + show up in center of screen
-- make the pages scrollable + resizable\* as well
-- save pic and cry files in a `tmp` folder next to app
 - implement connection, status, content and so on errors
+- save pic and cry files in a `tmp` folder next to app (lite cache)
+- error popup with short custom message for catches status on `urlCon` and so on
 - better api thing for getting either latest or legacy cry if the former doesn't exist
+- in cases where you're loading data (or doing other work) if it's not separated on to a different thread the UI will hang (read about how to separate them and send data over)
 - [searchbar](https://stackoverflow.com/questions/19868287/how-can-i-make-a-search-box-in-java)
-- [pokedex colors inspired\*](https://www.google.com/search?q=pokedex+device&ie=UTF-8#vhid=zqRulov4memzIM&vssid=_Bf5DaPrhEpeFxc8PiePgkQU_44)
-- [do the UI using the IDE tools](https://www.youtube.com/watch?v=0d_IIXaV59s)
 - better fonts and colors settings
 	- <https://mycolor.space/?hex=%23DB2F42&sub=1>
 	- <https://www.reddit.com/r/java/comments/122u4p/what_is_a_jlabels_default_font/>
 	- <https://alvinalexander.com/blog/post/jfc-swing/swing-faq-list-fonts-current-platform/>
-- [spinner animation](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
+- [spinner animation as one of the 3 pages](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
 	- <https://loading.io/>
 	- <https://icons8.com/preloaders/>
 		- <https://icons8.com/preloaders/en/circular/spinner-5/>
 		- <https://icons8.com/preloaders/en/miscellaneous/search/>
 		- <https://icons8.com/preloaders/en/miscellaneous/settings/>
 		- <https://icons8.com/preloaders/en/miscellaneous/hourglass/>
-
-1. Show spinner
-2. Load all the pokemon names, URLs + imgs
-3. Sort alphabetically
-4. Hide spinner + show search UI
-5. On keypress start filtering out loaded content and sorting alphabetically
-<!-- -->
-6. On pokemon click open details popup
-7. Show spinner
-8. Load in data from special URL + download cry
-9. Format + fix data
-10. Hide spinner + show detail UI (use prev downloaded pic)
