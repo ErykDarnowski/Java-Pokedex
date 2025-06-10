@@ -28,15 +28,20 @@ lectures.
 ## Plan
 
 - `X` in right corners to exit
+- resize hardcoded pokedex logo
 - error popup with short custom message
 - set good size + show up in center of screen
 - make the pages scrollable + resizable\* as well
 - save pic and cry files in a `tmp` folder next to app
 - implement connection, status, content and so on errors
+- better api thing for getting either latest or legacy cry if the former doesn't exist
 - [searchbar](https://stackoverflow.com/questions/19868287/how-can-i-make-a-search-box-in-java)
 - [pokedex colors inspired\*](https://www.google.com/search?q=pokedex+device&ie=UTF-8#vhid=zqRulov4memzIM&vssid=_Bf5DaPrhEpeFxc8PiePgkQU_44)
 - [do the UI using the IDE tools](https://www.youtube.com/watch?v=0d_IIXaV59s)
-- [playing sound effects](https://stackoverflow.com/questions/15526255/best-way-to-get-sound-on-button-press-for-a-java-calculator)
+- better fonts and colors settings
+	- <https://mycolor.space/?hex=%23DB2F42&sub=1>
+	- <https://www.reddit.com/r/java/comments/122u4p/what_is_a_jlabels_default_font/>
+	- <https://alvinalexander.com/blog/post/jfc-swing/swing-faq-list-fonts-current-platform/>
 - [spinner animation](https://stackoverflow.com/questions/7634402/creating-a-nice-loading-animation)
 	- <https://loading.io/>
 	- <https://icons8.com/preloaders/>
