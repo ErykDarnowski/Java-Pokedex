@@ -1,5 +1,4 @@
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
@@ -10,40 +9,54 @@ public class ImgTest extends JFrame {
 
     private JPanel loadingPanel;
     private JPanel imagePanel;
+    private JProgressBar progressBar;
 
-    // Sample Pokémon images from PokeAPI
-    private final String[][] imageEntries = {
-        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png", "1.png"},
-        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png", "4.png"},
-        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png", "7.png"},
-        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", "25.png"},
-    };
+    private final String[] imageUrls = ImgURLs.URLS;
 
     private int imagesLoaded = 0;
 
     public ImgTest() {
         setTitle("Image Downloader");
-        setSize(600, 600);
+        setSize(800, 800);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        loadingPanel = new JPanel(new BorderLayout());
-        loadingPanel.add(new JLabel("Loading images...", SwingConstants.CENTER), BorderLayout.CENTER);
+		progressBar = new JProgressBar(0, imageUrls.length);
+		progressBar.setStringPainted(true);
+		progressBar.setPreferredSize(new Dimension(300, 25)); // Custom width
 
+		// Create label
+		JLabel loadingLabel = new JLabel("Ładowanie...");
+		loadingLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		// Create progress bar container
+		progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		// Vertical panel to hold both
+		JPanel loadingGroup = new JPanel();
+		loadingGroup.setLayout(new BoxLayout(loadingGroup, BoxLayout.Y_AXIS));
+		loadingGroup.add(loadingLabel);
+		loadingGroup.add(Box.createRigidArea(new Dimension(0, 10))); // vertical spacing
+		loadingGroup.add(progressBar);
+
+		// Main loading panel centered
+		loadingPanel = new JPanel();
+		loadingPanel.setLayout(new GridBagLayout()); // center the group in the frame
+		loadingPanel.add(loadingGroup);
+		        
         add(loadingPanel, BorderLayout.CENTER);
         startBatchImageDownload();
     }
 
     private void startBatchImageDownload() {
-        imagePanel = new JPanel(new GridLayout(0, 2, 10, 10)); // dynamic rows, 2 columns
+        imagePanel = new JPanel(new GridLayout(0, 2, 10, 10));
         File tmpDir = new File("tmp");
         if (!tmpDir.exists()) {
             tmpDir.mkdirs();
         }
 
-        for (String[] entry : imageEntries) {
-            String imageUrl = entry[0];
-            String filename = entry[1];
+        for (String imageUrl : imageUrls) {
+            String filename = imageUrl.substring(imageUrl.lastIndexOf("/") + 1); // extract filename
             new ImageLoaderWorker(imageUrl, filename, tmpDir).execute();
         }
     }
@@ -60,19 +73,41 @@ public class ImgTest extends JFrame {
         }
 
         @Override
-        protected ImageIcon doInBackground() throws Exception {
-            File imageFile = new File(tmpDir, filename);
-            if (!imageFile.exists()) {
-                URL url = new URL(imageUrl);
-                BufferedImage image = ImageIO.read(url);
-                ImageIO.write(image, filename.substring(filename.lastIndexOf('.') + 1), imageFile);
-                System.out.println("Downloaded: " + filename);
-            } else {
-                System.out.println("Cached: " + filename);
-            }
-            BufferedImage savedImage = ImageIO.read(imageFile);
-            return new ImageIcon(savedImage);
-        }
+		protected ImageIcon doInBackground() {
+		    try {
+				File imageFile = new File(tmpDir, filename);
+				
+				if (!imageFile.exists()) {
+				    URL url = new URL(imageUrl);
+				    BufferedImage image = ImageIO.read(url);
+
+				    if (image == null) throw new Exception("Image could not be read from URL: " + imageUrl);
+
+				    ImageIO.write(image, filename.substring(filename.lastIndexOf('.') + 1), imageFile);
+				    System.out.println("Downloaded: " + filename);
+				} else {
+				    System.out.println("Cached: " + filename);
+				}
+
+				BufferedImage savedImage = ImageIO.read(imageFile);
+
+				return new ImageIcon(savedImage);
+		    } catch (Exception e) {
+				System.err.println("Failed to load image from " + imageUrl + ": " + e.getMessage());
+
+				// Return a simple placeholder icon (gray square)
+				BufferedImage placeholder = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);
+				Graphics2D g = placeholder.createGraphics();
+				g.setColor(Color.LIGHT_GRAY);
+				g.fillRect(0, 0, 200, 200);
+				g.setColor(Color.DARK_GRAY);
+				g.drawString("Image failed", 50, 100);
+				g.dispose();
+
+				return new ImageIcon(placeholder);
+		    }
+		}
+
 
         @Override
         protected void done() {
@@ -82,8 +117,10 @@ public class ImgTest extends JFrame {
                 imagePanel.add(imageLabel);
 
                 imagesLoaded++;
-                if (imagesLoaded == imageEntries.length) {
-                    // All images are loaded — replace loading screen
+                progressBar.setValue(imagesLoaded);
+
+                if (imagesLoaded == imageUrls.length) {
+                    // Replace loading screen with image grid
                     SwingUtilities.invokeLater(() -> {
                         remove(loadingPanel);
                         add(new JScrollPane(imagePanel), BorderLayout.CENTER);
