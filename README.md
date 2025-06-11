@@ -4,7 +4,6 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-1. Flesh out endpoints (implement as OOP API)
 2. Data irigation on pages via API + first joining of pages
 3. [Implement searchbar functionality](https://stackoverflow.com/questions/19868287/how-can-i-make-a-search-box-in-java)
 4. [Figure out transitions between pages (modular) + in cases where you're doing other work, if not separated on different threads the UI will hang (read on how to separate them and send data between them)\*](https://www.google.com/search?sxsrf=AE3TifO4vN9F8fhqv4dKzkHq6lC2jZsf1A:1749624727079&q=what+is+swing+glass+pane)
