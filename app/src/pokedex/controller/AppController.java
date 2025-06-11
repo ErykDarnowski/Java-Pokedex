@@ -19,7 +19,7 @@ import pokedex.util.UIConstants;
 
 public class AppController {
 
-    private final JFrame frame = new JFrame("Java Pokédex");
+    private final JFrame frame = new JFrame(UIConstants.APP_NAME + " v" + UIConstants.APP_VERSION);
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel root = new JPanel(cardLayout);
 

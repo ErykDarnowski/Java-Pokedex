@@ -4,12 +4,11 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-- Fix slow view load times
 - Finalize
-    - Add ver number in top bar\*
 	- Hard resize pokedex logo
     - Better resolution
     - Add icon\*
+- Fix slow view load times
 <!-- -->
 - Flesh out fonts, colors, use of constants, separate colors for values and such - some highlight, etc.
 - Add connection, status (`urlCon`), content and so on err catches + showing them in popup dialog with short message 

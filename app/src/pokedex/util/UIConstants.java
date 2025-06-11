@@ -3,6 +3,9 @@ package pokedex.util;
 import java.awt.*;
 
 public class UIConstants {
+    public static final String APP_NAME = "Java Pokédex";
+    public static final String APP_VERSION = "1.0.0";
+    // ---
     public static final Font FONT_NAMES = new Font("Courier", Font.BOLD, 12);
     public static final String PLACEHOLDER_TEXT = "Pikachu";
     public static final int POKEMON_PANEL_FIXED_HEIGHT = 180;
