@@ -5,7 +5,6 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 ## TODO
 
 - Finalize
-	- Hard resize pokedex logo
     - Better resolution
     - Add icon\*
 - Fix slow view load times

@@ -148,8 +148,8 @@ public class SearchView extends JPanel {
 
         JLabel logo = new JLabel();
         try {
-            Image img = ImageIO.read(getClass().getResource("/logo.png"));
-            logo.setIcon(new ImageIcon(img.getScaledInstance(194, 70, Image.SCALE_DEFAULT)));
+            Image logoImg = ImageIO.read(getClass().getResource("/logo.png"));
+            logo.setIcon(new ImageIcon(logoImg));
         } catch (Exception e) {
             logo.setText("Pokédex");
             logo.setForeground(Color.WHITE);
