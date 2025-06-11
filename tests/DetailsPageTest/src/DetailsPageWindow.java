@@ -64,11 +64,11 @@ public class DetailsPageWindow extends JFrame {
 	// --- LEFT: Column of labels ---
 	JPanel labelPanel = new JPanel();
 	labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
-	labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+	labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 10));
 	labelPanel.setOpaque(false);
 
-	nameAndIdLabel = new JLabel("Pikachu #25");
-	nameAndIdLabel.setFont(new Font("Courier", Font.BOLD, 50));
+	nameAndIdLabel = new JLabel("Pikachu #25"); // Squawkabilly Yellow Plumageg #10261
+	nameAndIdLabel.setFont(new Font("Courier", Font.BOLD, 41));
 	nameAndIdLabel.setForeground(new Color(255, 255, 255));
 	nameAndIdLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 25, 0));
 	labelPanel.add(nameAndIdLabel);
@@ -132,7 +132,7 @@ public class DetailsPageWindow extends JFrame {
 	    Image previewImageResized = previewImage.getScaledInstance(300, 300, Image.SCALE_DEFAULT);
 	    imageLabel = new JLabel(new ImageIcon(previewImageResized));
 	    imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-	    imageLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+	    imageLabel.setBorder(BorderFactory.createEmptyBorder(70, 0, 0, 10));
 	} catch (IOException ex) {
 	    System.err.println("Failed to load logo image: " + ex.getMessage());
 	    ex.printStackTrace();
