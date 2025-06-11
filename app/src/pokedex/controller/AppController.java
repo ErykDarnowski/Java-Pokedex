@@ -43,7 +43,7 @@ public class AppController {
         }
         // --- END: ADDED CODE FOR ICON ---
 
-        frame.setSize(900, 720);
+        frame.setSize(900, 680); // 720
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().setBackground(UIConstants.BACKGROUND);

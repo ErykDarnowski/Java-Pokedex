@@ -145,7 +145,7 @@ public class SearchView extends JPanel {
         searchField.setPreferredSize(new Dimension(300, 30));
 
         searchField.setText(UIConstants.PLACEHOLDER_TEXT);
-        searchField.setForeground(Color.GRAY);
+        searchField.setForeground(Color.LIGHT_GRAY);
 
         searchField.addFocusListener(new FocusListener() {
             @Override
