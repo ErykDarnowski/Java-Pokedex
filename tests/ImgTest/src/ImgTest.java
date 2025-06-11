@@ -1,69 +1,103 @@
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 
 public class ImgTest extends JFrame {
-	private JLabel label;
 
-	public ImgTest() {
-		setTitle("Image Downloader");
-		setSize(475, 475);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
+    private JPanel loadingPanel;
+    private JPanel imagePanel;
 
-		label = new JLabel("Loading image...", SwingConstants.CENTER);
-		add(label, BorderLayout.CENTER);
+    // Sample Pokémon images from PokeAPI
+    private final String[][] imageEntries = {
+        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png", "1.png"},
+        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png", "4.png"},
+        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png", "7.png"},
+        {"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", "25.png"},
+    };
 
-		loadImageWithWorker("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", "25.png");
-	}
-	
-	private void loadImageWithWorker(String imageUrl, String filename) {
-		SwingWorker<ImageIcon, Void> worker = new SwingWorker<>() { // do it in the background
-		    @Override
-		    protected ImageIcon doInBackground() throws Exception {
-				// Ensure tmp directory exists
-				File tmpDir = new File("tmp");
-				if (!tmpDir.exists()) {
-				    tmpDir.mkdirs();
-				}
+    private int imagesLoaded = 0;
 
-				File imageFile = new File(tmpDir, filename);
-				// Download image if not already downloaded
-				if (!imageFile.exists()) {
-				    URL url = new URL(imageUrl);
-				    BufferedImage image = ImageIO.read(url);
-				    ImageIO.write(image, "png", imageFile); // save to disk
-				}
+    public ImgTest() {
+        setTitle("Image Downloader");
+        setSize(600, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-				// Load from disk
-				BufferedImage savedImage = ImageIO.read(imageFile);
-				return new ImageIcon(savedImage);
-		    }
+        loadingPanel = new JPanel(new BorderLayout());
+        loadingPanel.add(new JLabel("Loading images...", SwingConstants.CENTER), BorderLayout.CENTER);
 
-		    @Override
-		    protected void done() {
-				try {
-				    ImageIcon icon = get();
-				    label.setIcon(icon);
-				    label.setText(null); // clear placeholder text
-				} catch (Exception ex) {
-				    label.setText("Failed to load image.");
-				    ex.printStackTrace();
-				}
-		    }
-		};
-		worker.execute();
-	}
+        add(loadingPanel, BorderLayout.CENTER);
+        startBatchImageDownload();
+    }
 
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> new ImgTest().setVisible(true));
-	}
+    private void startBatchImageDownload() {
+        imagePanel = new JPanel(new GridLayout(0, 2, 10, 10)); // dynamic rows, 2 columns
+        File tmpDir = new File("tmp");
+        if (!tmpDir.exists()) {
+            tmpDir.mkdirs();
+        }
+
+        for (String[] entry : imageEntries) {
+            String imageUrl = entry[0];
+            String filename = entry[1];
+            new ImageLoaderWorker(imageUrl, filename, tmpDir).execute();
+        }
+    }
+
+    private class ImageLoaderWorker extends SwingWorker<ImageIcon, Void> {
+        private final String imageUrl;
+        private final String filename;
+        private final File tmpDir;
+
+        public ImageLoaderWorker(String imageUrl, String filename, File tmpDir) {
+            this.imageUrl = imageUrl;
+            this.filename = filename;
+            this.tmpDir = tmpDir;
+        }
+
+        @Override
+        protected ImageIcon doInBackground() throws Exception {
+            File imageFile = new File(tmpDir, filename);
+            if (!imageFile.exists()) {
+                URL url = new URL(imageUrl);
+                BufferedImage image = ImageIO.read(url);
+                ImageIO.write(image, filename.substring(filename.lastIndexOf('.') + 1), imageFile);
+                System.out.println("Downloaded: " + filename);
+            } else {
+                System.out.println("Cached: " + filename);
+            }
+            BufferedImage savedImage = ImageIO.read(imageFile);
+            return new ImageIcon(savedImage);
+        }
+
+        @Override
+        protected void done() {
+            try {
+                ImageIcon icon = get();
+                JLabel imageLabel = new JLabel(icon);
+                imagePanel.add(imageLabel);
+
+                imagesLoaded++;
+                if (imagesLoaded == imageEntries.length) {
+                    // All images are loaded — replace loading screen
+                    SwingUtilities.invokeLater(() -> {
+                        remove(loadingPanel);
+                        add(new JScrollPane(imagePanel), BorderLayout.CENTER);
+                        revalidate();
+                        repaint();
+                    });
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ImgTest().setVisible(true));
+    }
 }
