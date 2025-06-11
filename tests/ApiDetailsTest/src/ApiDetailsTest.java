@@ -50,9 +50,6 @@ public class ApiDetailsTest {
                 }
             }
 
-            // cry URL
-            String cryUrl = json.getJSONObject("cries").getString("latest");
-
             // base stats
             JSONArray stats = json.getJSONArray("stats");
             int hp = 0, attack = 0, defense = 0, spAttack = 0, spDefense = 0, speed = 0;
@@ -80,7 +77,7 @@ public class ApiDetailsTest {
                 // 1. official-artwork
                 JSONObject official = other.getJSONObject("official-artwork");
                 String officialUrl = official.optString("front_default", "");
-                if (!officialUrl.isEmpty() && !officialUrl.endsWith(".gif")) {
+                if (!officialUrl.isEmpty() && !officialUrl.endsWith(".png")) {
                     imageUrl = officialUrl;
                 }
 
@@ -88,7 +85,7 @@ public class ApiDetailsTest {
                 if (imageUrl.isEmpty()) {
                     JSONObject home = other.getJSONObject("home");
                     String homeUrl = home.optString("front_default", "");
-                    if (!homeUrl.isEmpty() && !homeUrl.endsWith(".gif")) {
+                    if (!homeUrl.isEmpty() && !homeUrl.endsWith(".png")) {
                         imageUrl = homeUrl;
                     }
                 }
@@ -96,7 +93,7 @@ public class ApiDetailsTest {
                 // 3. fallback sprite
                 if (imageUrl.isEmpty()) {
                     String fallback = sprites.optString("front_default", "");
-                    if (!fallback.isEmpty() && !fallback.endsWith(".gif")) {
+                    if (!fallback.isEmpty() && !fallback.endsWith(".png")) {
                         imageUrl = fallback;
                     }
                 }
@@ -110,23 +107,22 @@ public class ApiDetailsTest {
             System.out.println("Wzrost: " + (height * 10) + " cm");
             System.out.println("Waga: " + (weight / 10.0) + " kg");
             System.out.println("Umiejetnosci:");
-            System.out.println(" - " + ability1);
-            System.out.println(" - " + hiddenAbility + " (ukryta)");
+            System.out.println("  - " + ability1);
+            System.out.println("  - " + hiddenAbility + " (ukryta)");
             System.out.println("Bazowe statystyki:");
-            System.out.println(" - HP: " + hp);
-            System.out.println(" - Atak: " + attack);
-            System.out.println(" - Predkosc: " + speed);
-            System.out.println(" - Atak specjalny: " + spAttack);
-            System.out.println(" - Obrona specjalna: " + spDefense);
+            System.out.println("  - HP: " + hp);
+            System.out.println("  - Atak: " + attack);
+            System.out.println("  - Predkosc: " + speed);
+            System.out.println("  - Atak specjalny: " + spAttack);
+            System.out.println("  - Obrona specjalna: " + spDefense);
             System.out.println("\nIMG URL: " + imageUrl);
-            System.out.println("CRY URL: " + cryUrl);
 
         } catch (IOException | JSONException e) {
             System.out.println("Error fetching or parsing data: " + e);
         }
     }
 
-    // Converts 'pikachu' → 'Pikachu'
+    // Converts 'pikachu' to 'Pikachu'
     private static String formatName(String raw) {
         String[] parts = raw.split("-");
         StringBuilder sb = new StringBuilder();
@@ -134,7 +130,7 @@ public class ApiDetailsTest {
             if (!part.isEmpty()) {
                 sb.append(Character.toUpperCase(part.charAt(0)))
                   .append(part.substring(1))
-                  .append(" ");
+                  .append(' ');
             }
         }
         return sb.toString().trim();
