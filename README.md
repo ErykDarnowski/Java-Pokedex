@@ -1,6 +1,8 @@
 # Java Pokedex
 
-A Java + swing Pokedex (a final project for the Programming languages and paradigms course at Uni).
+A Java + Swing Pokedex (a final project for the Programming languages and paradigms course at Uni).
+
+(screenshot)
 
 ## TODO
 
