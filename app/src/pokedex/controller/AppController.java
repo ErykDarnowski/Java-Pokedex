@@ -2,6 +2,7 @@ package pokedex.controller;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL; // Import the URL class
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +32,17 @@ public class AppController {
     private List<Pokemon> pokemons;
 
     public void init() {
+        // --- START: ADDED CODE FOR ICON ---
+        URL iconURL = getClass().getResource("/icon.png");
+        if (iconURL != null) {
+            ImageIcon icon = new ImageIcon(iconURL);
+            frame.setIconImage(icon.getImage());
+        } else {
+            // Optional: Log an error if the icon isn't found
+            System.err.println("Couldn't find icon file: icon.png");
+        }
+        // --- END: ADDED CODE FOR ICON ---
+
         frame.setSize(900, 720);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

@@ -4,9 +4,7 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-- Finalize
-    - Better resolution
-    - Add icon\*
+- Change resolution\*
 - Fix slow view load times
 <!-- -->
 - Flesh out fonts, colors, use of constants, separate colors for values and such - some highlight, etc.
