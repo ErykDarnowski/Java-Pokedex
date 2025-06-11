@@ -21,14 +21,43 @@ public class ImageCache {
     private static final int SCALED_SIZE = 130;
 
     static {
-        if (!TMP.exists()) TMP.mkdirs();
+        try {
+            if (!TMP.exists()) {
+                boolean created = TMP.mkdirs();
+                if (!created) {
+                    System.err.println("Warning: Could not create tmp directory");
+                }
+            }
+        } catch (SecurityException e) {
+            ErrorHandler.showError(null, e, "tworzenie katalogu tymczasowego");
+        }
     }
 
     public static ImageIcon load(String id) throws Exception {
         File file = new File(TMP, id + ".png");
-        if (!file.exists()) download(id, file);
-        BufferedImage img = ImageIO.read(file);
-        return new ImageIcon(img);
+        if (!file.exists()) {
+            try {
+                download(id, file);
+            } catch (Exception e) {
+                // Re-throw with more context for better error handling upstream
+                throw new Exception("Nie można pobrać obrazu dla Pokémona #" + id, e);
+            }
+        }
+        
+        try {
+            BufferedImage img = ImageIO.read(file);
+            if (img == null) {
+                throw new Exception("Plik obrazu jest uszkodzony: " + file.getName());
+            }
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            // If file is corrupted, try to re-download
+            if (file.exists()) {
+                file.delete();
+                return load(id); // Recursive call to re-download
+            }
+            throw new Exception("Nie można wczytać obrazu dla Pokémona #" + id, e);
+        }
     }
 
     // OPTIMIZATION: New method to load pre-scaled images
@@ -39,24 +68,40 @@ public class ImageCache {
             return cached;
         }
 
-        ImageIcon original = load(id);
-        Image scaled = original.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaled);
-        
-        SCALED_CACHE.put(cacheKey, scaledIcon);
-        return scaledIcon;
+        try {
+            ImageIcon original = load(id);
+            Image scaled = original.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaled);
+            
+            SCALED_CACHE.put(cacheKey, scaledIcon);
+            return scaledIcon;
+        } catch (Exception e) {
+            throw new Exception("Nie można przeskalować obrazu dla Pokémona #" + id, e);
+        }
     }
 
     public static CompletableFuture<ImageIcon> loadAsync(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            try { return load(id);} catch (Exception e) { return null; }
+            try { 
+                return load(id);
+            } catch (Exception e) { 
+                // Log error but don't show dialog in async context
+                System.err.println("Failed to load image for Pokemon #" + id + ": " + e.getMessage());
+                return null; 
+            }
         }, EXEC);
     }
 
     // OPTIMIZATION: Async method for pre-scaled images
     public static CompletableFuture<ImageIcon> loadScaledAsync(String id, int size) {
         return CompletableFuture.supplyAsync(() -> {
-            try { return loadScaled(id, size); } catch (Exception e) { return null; }
+            try { 
+                return loadScaled(id, size); 
+            } catch (Exception e) { 
+                // Log error but don't show dialog in async context
+                System.err.println("Failed to load scaled image for Pokemon #" + id + ": " + e.getMessage());
+                return null; 
+            }
         }, EXEC);
     }
 
@@ -66,16 +111,32 @@ public class ImageCache {
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/%s.png",
             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/%s.png"
         };
+        
+        Exception lastException = null;
+        
         for (String p : paths) {
             try {
                 URL url = new URL(String.format(p, id));
                 BufferedImage img = ImageIO.read(url);
                 if (img != null) {
-                    ImageIO.write(img, "png", dest);
-                    return;
+                    boolean written = ImageIO.write(img, "png", dest);
+                    if (written) {
+                        return; // Success
+                    } else {
+                        throw new Exception("Nie można zapisać obrazu do pliku");
+                    }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                lastException = e;
+                // Continue to next URL
+            }
         }
-        throw new Exception("Unable to download image for id " + id);
+        
+        // If we get here, all attempts failed
+        if (lastException != null) {
+            throw new Exception("Nie można pobrać obrazu dla Pokémona #" + id + " z żadnego źródła", lastException);
+        } else {
+            throw new Exception("Nie można pobrać obrazu dla Pokémona #" + id + " - wszystkie źródła zwróciły puste dane");
+        }
     }
 }

@@ -3,6 +3,7 @@ package pokedex.ui;
 import pokedex.model.Pokemon;
 import pokedex.util.UIConstants;
 import pokedex.util.ImageCache;
+import pokedex.util.ErrorHandler;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -131,7 +133,16 @@ public class SearchView extends JPanel {
         try {
             Image logoImg = ImageIO.read(getClass().getResource("/logo.png"));
             logo.setIcon(new ImageIcon(logoImg));
+        } catch (IOException e) {
+            ErrorHandler.showError(this, e, "ładowanie logo aplikacji");
+            logo.setText("Pokédex");
+            logo.setForeground(Color.WHITE);
+        } catch (IllegalArgumentException e) {
+            ErrorHandler.showError(this, "Nie można znaleźć pliku logo.png w zasobach aplikacji", "Błąd zasobów");
+            logo.setText("Pokédex");
+            logo.setForeground(Color.WHITE);
         } catch (Exception e) {
+            ErrorHandler.showError(this, e, "ładowanie logo aplikacji");
             logo.setText("Pokédex");
             logo.setForeground(Color.WHITE);
         }
@@ -166,7 +177,13 @@ public class SearchView extends JPanel {
         });
 
         searchField.setToolTipText("Wyszukaj Pokémona po nazwie...");
-        searchField.addCaretListener(e -> filter(searchField.getText()));
+        searchField.addCaretListener(e -> {
+            try {
+                filter(searchField.getText());
+            } catch (Exception ex) {
+                ErrorHandler.showError(this, ex, "filtrowanie listy Pokémonów");
+            }
+        });
         searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         searchPanel.add(searchField);
         topPanel.add(searchPanel, BorderLayout.SOUTH);
@@ -175,71 +192,102 @@ public class SearchView extends JPanel {
     }
 
     private void filter(String term) {
-        String actualTerm = term.equals(UIConstants.PLACEHOLDER_TEXT) ? "" : term;
+        try {
+            String actualTerm = term.equals(UIConstants.PLACEHOLDER_TEXT) ? "" : term;
 
-        String t = actualTerm.trim().toLowerCase().replace("-", "");
-        current = all.stream()
-            .filter(p -> p.getName().toLowerCase().replace("-", "").contains(t))
-            .collect(Collectors.toList());
+            String t = actualTerm.trim().toLowerCase().replace("-", "");
+            current = all.stream()
+                .filter(p -> p.getName().toLowerCase().replace("-", "").contains(t))
+                .collect(Collectors.toList());
 
-        updateDisplayedPokemon();
+            updateDisplayedPokemon();
+        } catch (Exception e) {
+            ErrorHandler.showError(this, e, "filtrowanie wyników wyszukiwania");
+            // Fallback to showing all Pokemon
+            current = all;
+            updateDisplayedPokemon();
+        }
     }
 
     // OPTIMIZATION: New method to update displayed Pokemon with batch loading
     private void updateDisplayedPokemon() {
-        gridPanel.removeAll();
+        try {
+            gridPanel.removeAll();
 
-        // Limit initial creation to first 50 panels for instant UI response
-        int initialBatch = Math.min(50, current.size());
-        
-        // Add first batch immediately
-        for (int i = 0; i < initialBatch; i++) {
-            Pokemon p = current.get(i);
-            JPanel panel = pokemonPanels.get(p);
-            if (panel == null) {
-                panel = createPokemonButton(p);
-                pokemonPanels.put(p, panel);
+            // Limit initial creation to first 50 panels for instant UI response
+            int initialBatch = Math.min(50, current.size());
+            
+            // Add first batch immediately
+            for (int i = 0; i < initialBatch; i++) {
+                Pokemon p = current.get(i);
+                JPanel panel = pokemonPanels.get(p);
+                if (panel == null) {
+                    panel = createPokemonButton(p);
+                    pokemonPanels.put(p, panel);
+                }
+                gridPanel.add(panel);
             }
-            gridPanel.add(panel);
-        }
 
-        updateGridColumns();
-        gridPanel.revalidate();
-        gridPanel.repaint();
-        gridContainerPanel.revalidate();
-        gridContainerPanel.repaint();
+            updateGridColumns();
+            gridPanel.revalidate();
+            gridPanel.repaint();
+            gridContainerPanel.revalidate();
+            gridContainerPanel.repaint();
 
-        // Load remaining panels in background if there are more
-        if (current.size() > initialBatch) {
-            SwingUtilities.invokeLater(() -> {
-                new SwingWorker<Void, JPanel>() {
-                    @Override
-                    protected Void doInBackground() throws Exception {
-                        for (int i = initialBatch; i < current.size(); i++) {
-                            Pokemon p = current.get(i);
-                            JPanel panel = pokemonPanels.get(p);
-                            if (panel == null) {
-                                panel = createPokemonButton(p);
-                                pokemonPanels.put(p, panel);
+            // Load remaining panels in background if there are more
+            if (current.size() > initialBatch) {
+                SwingUtilities.invokeLater(() -> {
+                    new SwingWorker<Void, JPanel>() {
+                        @Override
+                        protected Void doInBackground() throws Exception {
+                            try {
+                                for (int i = initialBatch; i < current.size(); i++) {
+                                    Pokemon p = current.get(i);
+                                    JPanel panel = pokemonPanels.get(p);
+                                    if (panel == null) {
+                                        panel = createPokemonButton(p);
+                                        pokemonPanels.put(p, panel);
+                                    }
+                                    publish(panel);
+                                    
+                                    // Small delay to prevent UI freezing
+                                    Thread.sleep(1);
+                                }
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                ErrorHandler.showError(SearchView.this, e, "ładowanie paneli Pokémonów w tle");
+                            } catch (Exception e) {
+                                ErrorHandler.showError(SearchView.this, e, "ładowanie paneli Pokémonów w tle");
                             }
-                            publish(panel);
-                            
-                            // Small delay to prevent UI freezing
-                            Thread.sleep(1);
+                            return null;
                         }
-                        return null;
-                    }
 
-                    @Override
-                    protected void process(java.util.List<JPanel> chunks) {
-                        for (JPanel panel : chunks) {
-                            gridPanel.add(panel);
+                        @Override
+                        protected void process(java.util.List<JPanel> chunks) {
+                            try {
+                                for (JPanel panel : chunks) {
+                                    gridPanel.add(panel);
+                                }
+                                gridPanel.revalidate();
+                                gridPanel.repaint();
+                            } catch (Exception e) {
+                                ErrorHandler.showError(SearchView.this, e, "aktualizowanie interfejsu użytkownika");
+                            }
                         }
-                        gridPanel.revalidate();
-                        gridPanel.repaint();
-                    }
-                }.execute();
-            });
+
+                        @Override
+                        protected void done() {
+                            try {
+                                get(); // This will throw any exception that occurred in doInBackground
+                            } catch (Exception e) {
+                                ErrorHandler.showError(SearchView.this, e, "finalizowanie ładowania paneli Pokémonów");
+                            }
+                        }
+                    }.execute();
+                });
+            }
+        } catch (Exception e) {
+            ErrorHandler.showError(this, e, "aktualizowanie wyświetlanych Pokémonów");
         }
     }
 
@@ -255,7 +303,13 @@ public class SearchView extends JPanel {
         imageButton.setPreferredSize(new Dimension(UIConstants.POKEMON_PANEL_FIXED_WIDTH - 20, 150));
         imageButton.setFocusPainted(false);
         imageButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        imageButton.addActionListener(e -> onSelect.accept(value));
+        imageButton.addActionListener(e -> {
+            try {
+                onSelect.accept(value);
+            } catch (Exception ex) {
+                ErrorHandler.showError(this, ex, "wybieranie Pokémona: " + value.getName());
+            }
+        });
 
         // OPTIMIZATION: Create placeholder first, then load/scale image asynchronously
         BufferedImage placeholder = new BufferedImage(130, 130, BufferedImage.TYPE_INT_ARGB);
@@ -276,6 +330,9 @@ public class SearchView extends JPanel {
                         // Use the optimized loadScaled method
                         return ImageCache.loadScaled(value.getId(), 130);
                     } catch (Exception e) {
+                        // Don't show error dialog here as it would be too intrusive
+                        // Just log the error and return null to show fallback
+                        System.err.println("Failed to load image for Pokemon " + value.getName() + " (ID: " + value.getId() + "): " + e.getMessage());
                         return null;
                     }
                 }
@@ -291,6 +348,10 @@ public class SearchView extends JPanel {
                             imageButton.setForeground(Color.RED);
                         }
                     } catch (Exception e) {
+                        // Only show error dialog for unexpected exceptions
+                        if (!(e.getCause() instanceof IOException)) {
+                            ErrorHandler.showError(SearchView.this, e, "ładowanie obrazka Pokémona: " + value.getName());
+                        }
                         imageButton.setText("Error");
                         imageButton.setForeground(Color.RED);
                     }
@@ -310,22 +371,26 @@ public class SearchView extends JPanel {
     }
 
     private void updateGridColumns() {
-        int itemWidth = UIConstants.POKEMON_PANEL_FIXED_WIDTH;
-        int hGap = 10;
+        try {
+            int itemWidth = UIConstants.POKEMON_PANEL_FIXED_WIDTH;
+            int hGap = 10;
 
-        if (scrollPane != null && scrollPane.getViewport() != null) {
-            int availableWidth = scrollPane.getViewport().getWidth();
-            int scrollBuffer = scrollPane.getVerticalScrollBar().isVisible()
-                ? scrollPane.getVerticalScrollBar().getWidth() : 0;
+            if (scrollPane != null && scrollPane.getViewport() != null) {
+                int availableWidth = scrollPane.getViewport().getWidth();
+                int scrollBuffer = scrollPane.getVerticalScrollBar().isVisible()
+                    ? scrollPane.getVerticalScrollBar().getWidth() : 0;
 
-            int effectiveWidth = availableWidth - scrollBuffer;
-            int columns = Math.max(1, effectiveWidth / (itemWidth + hGap));
+                int effectiveWidth = availableWidth - scrollBuffer;
+                int columns = Math.max(1, effectiveWidth / (itemWidth + hGap));
 
-            if (!(gridPanel.getLayout() instanceof GridLayout) || ((GridLayout) gridPanel.getLayout()).getColumns() != columns) {
-                gridPanel.setLayout(new GridLayout(0, columns, hGap, 10));
-                gridPanel.revalidate();
-                gridContainerPanel.revalidate();
+                if (!(gridPanel.getLayout() instanceof GridLayout) || ((GridLayout) gridPanel.getLayout()).getColumns() != columns) {
+                    gridPanel.setLayout(new GridLayout(0, columns, hGap, 10));
+                    gridPanel.revalidate();
+                    gridContainerPanel.revalidate();
+                }
             }
+        } catch (Exception e) {
+            ErrorHandler.showError(this, e, "aktualizowanie układu kolumn siatki");
         }
     }
 }

@@ -15,6 +15,7 @@ import pokedex.service.PokeApiService;
 import pokedex.ui.DetailsView;
 import pokedex.ui.LoadingView;
 import pokedex.ui.SearchView;
+import pokedex.util.ErrorHandler;
 import pokedex.util.ImageCache;
 import pokedex.util.UIConstants;
 
@@ -35,8 +36,13 @@ public class AppController {
         // --- START: ADDED CODE FOR ICON ---
         URL iconURL = getClass().getResource("/icon.png");
         if (iconURL != null) {
-            ImageIcon icon = new ImageIcon(iconURL);
-            frame.setIconImage(icon.getImage());
+            try {
+                ImageIcon icon = new ImageIcon(iconURL);
+                frame.setIconImage(icon.getImage());
+            } catch (Exception ex) {
+                // Handle any errors loading the icon
+                ErrorHandler.showError(frame, ex, "ładowanie ikony aplikacji");
+            }
         } else {
             // Optional: Log an error if the icon isn't found
             System.err.println("Couldn't find icon file: icon.png");
@@ -75,8 +81,9 @@ public class AppController {
                     imageLoadingPool.submit(() -> {
                         try {
                             ImageCache.load(p.getId());
-                        } catch (Exception ignored) {
-                            // Suppress exceptions for individual image loads
+                        } catch (Exception ex) {
+                            // Log but don't show dialog for individual image load failures
+                            System.err.println("Failed to load image for Pokemon " + p.getId() + ": " + ex.getMessage());
                         }
                         int current = loaded.incrementAndGet();
                         SwingUtilities.invokeLater(() ->
@@ -84,8 +91,18 @@ public class AppController {
                     });
                 }
 
-                imageLoadingPool.shutdown();
-                imageLoadingPool.awaitTermination(5, TimeUnit.MINUTES);
+                try {
+                    imageLoadingPool.shutdown();
+                    if (!imageLoadingPool.awaitTermination(5, TimeUnit.MINUTES)) {
+                        imageLoadingPool.shutdownNow();
+                        ErrorHandler.showTimeoutError(frame, "ładowanie obrazków Pokémonów");
+                    }
+                } catch (InterruptedException ex) {
+                    imageLoadingPool.shutdownNow();
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Przerwano ładowanie obrazków", ex);
+                }
+                
                 return null;
             }
 
@@ -96,9 +113,19 @@ public class AppController {
                     loadingView.setProgressBarVisible(false);
                     showSearch(); // Now show the search view
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Error loading initial data: " + ex.getMessage(), "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                    System.exit(1);
+                    ErrorHandler.showError(frame, ex, "ładowanie początkowych danych");
+                    // Give user option to retry or exit
+                    int choice = JOptionPane.showConfirmDialog(
+                        frame, 
+                        "Czy chcesz spróbować ponownie?", 
+                        "Błąd ładowania", 
+                        JOptionPane.YES_NO_OPTION
+                    );
+                    if (choice == JOptionPane.YES_OPTION) {
+                        loadInitial(); // Retry
+                    } else {
+                        System.exit(1);
+                    }
                 }
             }
         }.execute());
@@ -111,7 +138,7 @@ public class AppController {
 
             new SwingWorker<SearchView, Void>() {
                 @Override
-                protected SearchView doInBackground() {
+                protected SearchView doInBackground() throws Exception {
                     return new SearchView(pokemons, AppController.this::showDetails, null);
                 }
 
@@ -122,8 +149,14 @@ public class AppController {
                         root.add(searchView, "search");
                         cardLayout.show(root, "search");
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(frame, "Error displaying search view: " + ex.getMessage(), "Error",
-                                JOptionPane.ERROR_MESSAGE);
+                        ErrorHandler.showError(frame, ex, "wyświetlanie widoku wyszukiwania");
+                        // Try to show a basic error state or exit gracefully
+                        JOptionPane.showMessageDialog(
+                            frame, 
+                            "Nie można uruchomić aplikacji. Aplikacja zostanie zamknięta.", 
+                            "Błąd krytyczny", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
                         System.exit(1);
                     }
                 }
@@ -134,9 +167,9 @@ public class AppController {
     }
 
     private void showDetails(Pokemon p) {
-        // --- MODIFIED CODE ---
-        // Removed calls to loadingView.setIndeterminate() and cardLayout.show(root, "loading");
-        // The SwingWorker still runs in the background.
+        // Show loading state in the current view or add a subtle loading indicator
+        // but don't switch to the loading screen entirely
+        
         new SwingWorker<PokemonDetails, Void>() {
             @Override
             protected PokemonDetails doInBackground() throws Exception {
@@ -153,11 +186,10 @@ public class AppController {
                     root.add(detailsView, "details");
                     cardLayout.show(root, "details");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Error loading details: " + ex.getMessage(), "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                    ErrorHandler.showError(frame, ex, "ładowanie szczegółów Pokémona: " + p.getName());
+                    // Stay on the search view
                     cardLayout.show(root, "search");
                 }
-                // No finally block needed for loadingView state, as it's not being used here.
             }
         }.execute();
     }

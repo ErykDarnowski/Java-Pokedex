@@ -4,7 +4,6 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-- Add connection, status (`urlCon`), content and so on error catches + show them in dialog with short message
 - Flesh out fonts + colors, use of constants, separately highlighted values and such
 - Send over
 	1. [Make sure it's OOP compliant](https://chatgpt.com/c/684809ed-71cc-8012-af80-2ef2483b0f6f)
