@@ -5,8 +5,6 @@ A Java + swing Pokedex (a final project for the Programming languages and paradi
 ## TODO
 
 - Change resolution\*
-- Fix slow view load times
-<!-- -->
 - Flesh out fonts, colors, use of constants, separate colors for values and such - some highlight, etc.
 - Add connection, status (`urlCon`), content and so on err catches + showing them in popup dialog with short message 
 - Send over
