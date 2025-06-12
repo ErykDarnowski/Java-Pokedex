@@ -6,7 +6,6 @@ A Java + Swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-- Better use of UIConstants
 - Test out 100%
 - Send over
 	1. [Make sure it's OOP compliant](https://chatgpt.com/c/684809ed-71cc-8012-af80-2ef2483b0f6f)
