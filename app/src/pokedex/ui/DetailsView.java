@@ -128,7 +128,7 @@ public class DetailsView extends JPanel {
         JLabel imgLabel = new JLabel("");
         imgLabel.setHorizontalAlignment(JLabel.RIGHT);
         imgLabel.setVerticalAlignment(JLabel.TOP);
-        imgLabel.setBorder(BorderFactory.createEmptyBorder(70, 0, 0, 10));
+        imgLabel.setBorder(BorderFactory.createEmptyBorder(70, 0, 0, 20));
         imgLabel.setForeground(Color.WHITE);
 
         right.add(imgLabel, BorderLayout.NORTH);

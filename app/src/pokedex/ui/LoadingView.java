@@ -39,7 +39,7 @@ public class LoadingView extends JPanel {
 
         label = new JLabel("Ładowanie...");
         try {
-            label.setFont(new Font("SansSerif", Font.BOLD | Font.ITALIC, 17));
+            label.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 16));
             label.setForeground(new Color(238, 238, 238));
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
         } catch (Exception ex) {
