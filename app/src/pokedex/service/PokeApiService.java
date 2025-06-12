@@ -23,6 +23,7 @@ import java.util.List;
  * Service class for interacting with the PokeAPI REST service.
  * Provides methods to fetch Pokemon data with comprehensive error handling
  * and automatic retry logic for network failures.
+ * Now uses try-with-resources for proper resource management.
  * 
  * @author Eryk Darnowski (7741)
  * @version 1.0.0
@@ -202,6 +203,7 @@ public class PokeApiService {
 
     /**
      * Fetches data from the specified URL with proper timeout and error handling.
+     * Now uses try-with-resources for automatic resource management.
      */
     private String fetchData(String urlString) throws IOException {
         validateUrl(urlString);
@@ -209,11 +211,14 @@ public class PokeApiService {
         URL url = new URL(urlString);
         URLConnection connection = createConnection(url);
         
+        // Using try-with-resources to automatically close streams
         try (InputStream inputStream = connection.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
             
             return readResponse(reader);
         }
+        // No need for finally block - resources are automatically closed
     }
 
     /**

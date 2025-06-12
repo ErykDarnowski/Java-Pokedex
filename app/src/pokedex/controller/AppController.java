@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
 
 import pokedex.model.Pokemon;
 import pokedex.model.PokemonDetails;
@@ -16,16 +17,19 @@ import pokedex.ui.SearchView;
 import pokedex.util.ErrorHandler;
 import pokedex.util.ImageCache;
 import pokedex.util.UIConstants;
+import pokedex.util.LoadingSubject;
+import pokedex.util.LoadingObserver;
 
 /**
  * Main controller coordinating the application's UI flow and data management.
  * Implements the Model-View-Controller pattern by managing view transitions,
- * data loading, and user interactions.
+ * data loading, and user interactions. Now implements LoadingSubject for
+ * observer pattern support.
  * 
  * @author Eryk Darnowski (7741)
  * @version 1.0.0
  */
-public class AppController {
+public class AppController implements LoadingSubject {
 
     // View identifiers for CardLayout
     private static final String LOADING_VIEW = "loading";
@@ -50,6 +54,9 @@ public class AppController {
     // Services and data
     private final PokeApiService apiService;
     private List<Pokemon> pokemonData;
+    
+    // Observer pattern support
+    private final List<LoadingObserver> loadingObservers = new ArrayList<>();
 
     /**
      * Constructs a new AppController with initialized UI components and services.
@@ -62,6 +69,56 @@ public class AppController {
         this.apiService = new PokeApiService();
         
         setupRootPanel();
+        // Register the loading view as an observer
+        addLoadingObserver(loadingView);
+    }
+
+    // LoadingSubject implementation
+    @Override
+    public void addLoadingObserver(LoadingObserver observer) {
+        if (observer != null && !loadingObservers.contains(observer)) {
+            loadingObservers.add(observer);
+        }
+    }
+
+    @Override
+    public void removeLoadingObserver(LoadingObserver observer) {
+        loadingObservers.remove(observer);
+    }
+
+    @Override
+    public void notifyProgressUpdate(int current, int total) {
+        for (LoadingObserver observer : loadingObservers) {
+            observer.onProgressUpdate(current, total);
+        }
+    }
+
+    @Override
+    public void notifyStatusChange(String statusText) {
+        for (LoadingObserver observer : loadingObservers) {
+            observer.onStatusChange(statusText);
+        }
+    }
+
+    @Override
+    public void notifyLoadingComplete() {
+        for (LoadingObserver observer : loadingObservers) {
+            observer.onLoadingComplete();
+        }
+    }
+
+    @Override
+    public void notifyLoadingError(String errorMessage) {
+        for (LoadingObserver observer : loadingObservers) {
+            observer.onLoadingError(errorMessage);
+        }
+    }
+
+    @Override
+    public void notifyProgressBarVisibilityChange(boolean visible) {
+        for (LoadingObserver observer : loadingObservers) {
+            observer.onProgressBarVisibilityChange(visible);
+        }
     }
 
     /**
@@ -134,8 +191,8 @@ public class AppController {
      * Begins the asynchronous data loading process.
      */
     private void beginDataLoading() {
-        loadingView.setLabelText("Ładowanie Pokémonów...");
-        loadingView.setProgressBarVisible(true);
+        notifyStatusChange("Ładowanie Pokémonów...");
+        notifyProgressBarVisibilityChange(true);
         
         loadingView.start(this::executeDataLoadingTask);
     }
@@ -213,10 +270,10 @@ public class AppController {
     }
 
     /**
-     * Updates the loading progress UI.
+     * Updates the loading progress UI using observer pattern.
      */
     private void updateImageLoadingProgress(int current, int total) {
-        SwingUtilities.invokeLater(() -> loadingView.setProgress(current, total));
+        SwingUtilities.invokeLater(() -> notifyProgressUpdate(current, total));
     }
 
     /**
@@ -247,7 +304,7 @@ public class AppController {
      * Completes the data loading process and transitions to search view.
      */
     private void finishDataLoading() {
-        loadingView.setProgressBarVisible(false);
+        notifyLoadingComplete();
         transitionToSearchView();
     }
 
@@ -292,7 +349,7 @@ public class AppController {
      * Creates the search view asynchronously to avoid blocking the UI.
      */
     private void createSearchView() {
-        loadingView.setLabelText("Przygotowywanie widoku...");
+        notifyStatusChange("Przygotowywanie widoku...");
         
         new SwingWorker<SearchView, Void>() {
             @Override

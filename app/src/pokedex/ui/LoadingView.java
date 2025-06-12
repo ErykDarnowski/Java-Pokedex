@@ -1,6 +1,7 @@
 package pokedex.ui;
 
 import pokedex.util.ErrorHandler;
+import pokedex.util.LoadingObserver;
 import pokedex.util.UIConstants;
 
 import javax.swing.*;
@@ -9,13 +10,12 @@ import java.net.URL;
 
 /**
  * Loading screen component that displays progress indicators and status messages.
- * Supports both animated spinner and progress bar modes with graceful fallback
- * for missing resources.
+ * Implements LoadingObserver to react to loading events from the controller.
  * 
  * @author Eryk Darnowski (7741)
  * @version 1.0.0
  */
-public class LoadingView extends JPanel {
+public class LoadingView extends JPanel implements LoadingObserver {
 
     private static final String SPINNER_RESOURCE = "/spinner.gif";
     private static final Font LOADING_FONT = new Font("Segoe UI", Font.BOLD | Font.ITALIC, 16);
@@ -73,6 +73,32 @@ public class LoadingView extends JPanel {
                 createFallbackView();
             }
         }
+    }
+
+    // LoadingObserver implementation
+    @Override
+    public void onProgressUpdate(int current, int total) {
+        setProgress(current, total);
+    }
+
+    @Override
+    public void onStatusChange(String statusText) {
+        setLabelText(statusText);
+    }
+
+    @Override
+    public void onLoadingComplete() {
+        setProgressBarVisible(false);
+    }
+
+    @Override
+    public void onLoadingError(String errorMessage) {
+        setErrorState(errorMessage);
+    }
+
+    @Override
+    public void onProgressBarVisibilityChange(boolean visible) {
+        setProgressBarVisible(visible);
     }
 
     /**

@@ -5,7 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.*;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Thread-safe image caching utility for Pokemon sprites.
  * Handles downloading, caching, and scaling of Pokemon images with fallback URLs.
  * Provides both synchronous and asynchronous loading capabilities.
+ * Now uses try-with-resources for proper file handling and creates placeholder
+ * files for Pokemon without available images to avoid repeated download attempts.
  * 
  * @author Eryk Darnowski (7741)
  * @version 1.0.0
@@ -22,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ImageCache {
 
     private static final File CACHE_DIR = new File("tmp");
-    private static final String PLACEHOLDER_EXTENSION = ".placeholder";
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(
         Math.max(2, Runtime.getRuntime().availableProcessors()));
     
@@ -34,6 +36,9 @@ public final class ImageCache {
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/%s.png",
         "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/%s.png"
     };
+    
+    // Placeholder marker for missing images
+    private static final String PLACEHOLDER_MARKER = ".placeholder";
 
     static {
         initializeCacheDirectory();
@@ -48,30 +53,29 @@ public final class ImageCache {
 
     /**
      * Loads a Pokemon image synchronously. Downloads if not cached locally.
+     * Returns null for Pokemon that have no available images (marked with placeholder).
      * 
      * @param pokemonId the Pokemon ID
-     * @return ImageIcon for the Pokemon, or null if loading fails or placeholder exists
+     * @return ImageIcon for the Pokemon, or null if no image exists
      * @throws Exception if image cannot be loaded or downloaded
      */
     public static ImageIcon load(String pokemonId) throws Exception {
         validatePokemonId(pokemonId);
         
         File cachedFile = getCacheFile(pokemonId);
-        File placeholderFile = getPlaceholderFile(pokemonId);
+        File placeholderMarker = getPlaceholderMarkerFile(pokemonId);
         
-        // Check if we have a placeholder indicating previous failed downloads
-        if (placeholderFile.exists()) {
-            logError("Skipping download for Pokemon #" + pokemonId + " - placeholder exists (previous download failed)", null);
+        // Check if this Pokemon is marked as having no image
+        if (placeholderMarker.exists()) {
             return null;
         }
         
+        // If image doesn't exist, try to download it
         if (!cachedFile.exists()) {
-            try {
-                downloadImage(pokemonId, cachedFile);
-            } catch (Exception e) {
-                // Create placeholder file to prevent future download attempts
-                createPlaceholderFile(placeholderFile, pokemonId);
-                throw e;
+            if (!downloadImage(pokemonId, cachedFile)) {
+                // Download failed from all sources - create placeholder marker
+                createPlaceholderMarker(placeholderMarker);
+                return null;
             }
         }
         
@@ -83,7 +87,7 @@ public final class ImageCache {
      * 
      * @param pokemonId the Pokemon ID
      * @param targetSize the desired image size
-     * @return scaled ImageIcon, or null if loading fails
+     * @return scaled ImageIcon, or null if no image exists
      * @throws Exception if image cannot be loaded or scaled
      */
     public static ImageIcon loadScaled(String pokemonId, int targetSize) throws Exception {
@@ -96,11 +100,15 @@ public final class ImageCache {
 
         ImageIcon original = load(pokemonId);
         if (original == null) {
-            return null; // Don't cache null results
+            // No image available for this Pokemon
+            return null;
         }
         
         ImageIcon scaled = scaleImage(original, targetSize);
-        SCALED_CACHE.put(cacheKey, scaled);
+        
+        if (scaled != null) {
+            SCALED_CACHE.put(cacheKey, scaled);
+        }
         return scaled;
     }
 
@@ -140,39 +148,6 @@ public final class ImageCache {
     }
 
     /**
-     * Removes the placeholder file for a Pokemon, allowing download attempts to resume.
-     * Useful for retrying downloads after network issues are resolved.
-     * 
-     * @param pokemonId the Pokemon ID
-     * @return true if placeholder was removed or didn't exist, false if removal failed
-     */
-    public static boolean removePlaceholder(String pokemonId) {
-        validatePokemonId(pokemonId);
-        File placeholderFile = getPlaceholderFile(pokemonId);
-        
-        if (!placeholderFile.exists()) {
-            return true; // No placeholder to remove
-        }
-        
-        boolean removed = placeholderFile.delete();
-        if (removed) {
-            logError("Removed placeholder for Pokemon #" + pokemonId + " - downloads will be retried", null);
-        }
-        return removed;
-    }
-
-    /**
-     * Checks if a Pokemon has a placeholder file (indicating previous download failure).
-     * 
-     * @param pokemonId the Pokemon ID
-     * @return true if placeholder exists, false otherwise
-     */
-    public static boolean hasPlaceholder(String pokemonId) {
-        validatePokemonId(pokemonId);
-        return getPlaceholderFile(pokemonId).exists();
-    }
-
-    /**
      * Shuts down the executor service gracefully.
      * Should be called when the application is closing.
      */
@@ -205,6 +180,19 @@ public final class ImageCache {
     }
 
     /**
+     * Clears placeholder markers, allowing retry of image downloads.
+     * Useful if the API might have been updated with new images.
+     */
+    public static void clearPlaceholderMarkers() {
+        File[] files = CACHE_DIR.listFiles((dir, name) -> name.endsWith(PLACEHOLDER_MARKER));
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
+        }
+    }
+
+    /**
      * Initializes the cache directory if it doesn't exist.
      */
     private static void initializeCacheDirectory() {
@@ -219,39 +207,51 @@ public final class ImageCache {
 
     /**
      * Downloads a Pokemon image from available URLs.
+     * Returns true if successful, false if all URLs failed.
+     * Now uses try-with-resources for proper stream handling.
      */
-    private static void downloadImage(String pokemonId, File destination) throws Exception {
-        Exception lastException = null;
-        
+    private static boolean downloadImage(String pokemonId, File destination) {
         for (String urlTemplate : SPRITE_URLS) {
             try {
                 URL imageUrl = new URL(String.format(urlTemplate, pokemonId));
-                BufferedImage image = ImageIO.read(imageUrl);
                 
-                if (image != null && ImageIO.write(image, "png", destination)) {
-                    return; // Success
+                // Using try-with-resources for automatic stream closure
+                try (InputStream inputStream = imageUrl.openStream();
+                     FileOutputStream outputStream = new FileOutputStream(destination)) {
+                    
+                    // Read image data
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    
+                    // Verify the downloaded file is a valid image
+                    BufferedImage testImage = ImageIO.read(destination);
+                    if (testImage != null) {
+                        return true; // Success
+                    } else {
+                        destination.delete(); // Remove invalid file
+                    }
                 }
             } catch (Exception e) {
-                lastException = e;
-                // Continue to next URL
+                // Log but continue to next URL
+                logError("Failed to download from: " + String.format(urlTemplate, pokemonId), e);
             }
         }
         
-        throw new Exception("Failed to download image for Pokemon #" + pokemonId + 
-                          " from all sources", lastException);
+        // All URLs failed
+        return false;
     }
 
     /**
-     * Creates a placeholder file to indicate that download attempts have failed.
-     * This prevents repeated failed download attempts.
+     * Creates a placeholder marker file to indicate that this Pokemon has no available image.
      */
-    private static void createPlaceholderFile(File placeholderFile, String pokemonId) {
+    private static void createPlaceholderMarker(File markerFile) {
         try {
-            if (placeholderFile.createNewFile()) {
-                logError("Created placeholder for Pokemon #" + pokemonId + " - future downloads will be skipped", null);
-            }
-        } catch (IOException e) {
-            logError("Failed to create placeholder file for Pokemon #" + pokemonId, e);
+            markerFile.createNewFile();
+        } catch (Exception e) {
+            logError("Failed to create placeholder marker: " + markerFile.getName(), e);
         }
     }
 
@@ -264,7 +264,11 @@ public final class ImageCache {
             if (image == null) {
                 // File might be corrupted, try re-downloading
                 file.delete();
-                downloadImage(pokemonId, file);
+                if (!downloadImage(pokemonId, file)) {
+                    // Re-download failed, mark as placeholder
+                    createPlaceholderMarker(getPlaceholderMarkerFile(pokemonId));
+                    return null;
+                }
                 image = ImageIO.read(file);
             }
             
@@ -306,10 +310,10 @@ public final class ImageCache {
     }
 
     /**
-     * Returns the placeholder file for a given Pokemon ID.
+     * Returns the placeholder marker file for a given Pokemon ID.
      */
-    private static File getPlaceholderFile(String pokemonId) {
-        return new File(CACHE_DIR, pokemonId + PLACEHOLDER_EXTENSION);
+    private static File getPlaceholderMarkerFile(String pokemonId) {
+        return new File(CACHE_DIR, pokemonId + PLACEHOLDER_MARKER);
     }
 
     /**
@@ -325,10 +329,6 @@ public final class ImageCache {
      * Logs errors without showing UI dialogs in async contexts.
      */
     private static void logError(String message, Exception e) {
-        if (e != null) {
-            System.err.println(message + ": " + e.getMessage());
-        } else {
-            System.err.println(message);
-        }
+        System.err.println(message + ": " + e.getMessage());
     }
 }
