@@ -16,6 +16,7 @@ public class PokedexApp {
             System.err.println("Uncaught exception in thread " + thread.getName() + ": " + exception.getMessage());
             exception.printStackTrace();
             
+	    	/*
             SwingUtilities.invokeLater(() -> {
                 ErrorHandler.showError(
                     null, 
@@ -25,6 +26,7 @@ public class PokedexApp {
                     "Błąd krytyczny"
                 );
             });
+	    	*/
         });
 
         // Force Nimbus L&F for modern UI

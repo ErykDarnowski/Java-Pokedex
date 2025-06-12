@@ -311,16 +311,6 @@ public class SearchView extends JPanel {
             }
         });
 
-        // OPTIMIZATION: Create placeholder first, then load/scale image asynchronously
-        BufferedImage placeholder = new BufferedImage(130, 130, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = placeholder.createGraphics();
-        g2d.setColor(new Color(60, 60, 60));
-        g2d.fillRect(0, 0, 130, 130);
-        g2d.setColor(Color.WHITE);
-        g2d.drawString("Loading...", 40, 65);
-        g2d.dispose();
-        imageButton.setIcon(new ImageIcon(placeholder));
-
         // Load and scale image asynchronously to avoid blocking EDT
         SwingUtilities.invokeLater(() -> {
             new SwingWorker<ImageIcon, Void>() {
@@ -338,24 +328,20 @@ public class SearchView extends JPanel {
                 }
 
                 @Override
-                protected void done() {
-                    try {
-                        ImageIcon scaledIcon = get();
-                        if (scaledIcon != null) {
-                            imageButton.setIcon(scaledIcon);
-                        } else {
-                            imageButton.setText("No Image");
-                            imageButton.setForeground(Color.RED);
-                        }
-                    } catch (Exception e) {
-                        // Only show error dialog for unexpected exceptions
-                        if (!(e.getCause() instanceof IOException)) {
-                            ErrorHandler.showError(SearchView.this, e, "ładowanie obrazka Pokémona: " + value.getName());
-                        }
-                        imageButton.setText("Error");
-                        imageButton.setForeground(Color.RED);
-                    }
-                }
+				protected void done() {
+				    try {
+					ImageIcon scaledIcon = get();
+					if (scaledIcon != null) {
+					    imageButton.setIcon(scaledIcon);
+					    imageButton.setText("");
+					} else {
+						imageButton.setText(String.format("<html><center><span style='%s'>BRAK OBRAZKA<br>W API</span></center></html>", UIConstants.IMG_ERR_STYLE_SEARCH));
+					}
+				    } catch (Exception e) {
+						ErrorHandler.showError(SearchView.this, e, "ładowanie obrazka Pokémona: " + value.getName());
+						imageButton.setText(String.format("<html><center><span style='%s'>BŁĄD ŁADOWANIA</span></center></html>", UIConstants.IMG_ERR_STYLE_SEARCH));
+				    }
+				}
             }.execute();
         });
 

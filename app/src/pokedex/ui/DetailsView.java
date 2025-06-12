@@ -21,13 +21,11 @@ public class DetailsView extends JPanel {
             initializeView(d, onBack);
         } catch (Exception ex) {
             ErrorHandler.showError(this, ex, "inicjalizacja widoku szczegółów Pokémona");
-            // Create a minimal error state view
             createErrorStateView(onBack);
         }
     }
 
     private void initializeView(PokemonDetails d, Runnable onBack) {
-        // --- TOP: Back Button ---
         JButton back = new JButton("← Wróć");
         back.setFont(new Font("SansSerif", Font.BOLD, 16));
         back.setFocusPainted(false);
@@ -48,14 +46,12 @@ public class DetailsView extends JPanel {
         top.add(back);
         add(top, BorderLayout.NORTH);
 
-        // --- LEFT: Label column ---
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setOpaque(false);
         left.setBorder(new EmptyBorder(0, 15, 10, 10));
 
         try {
-            // Safely display Pokemon name and ID
             String pokemonName = d.getName() != null ? d.getName() : "Nieznany";
             JLabel nameAndId = new JLabel(pokemonName + " #" + d.getId());
             nameAndId.setFont(UIConstants.FONT_TITLE);
@@ -63,12 +59,10 @@ public class DetailsView extends JPanel {
             nameAndId.setBorder(new EmptyBorder(0, 0, 15, 0));
             left.add(nameAndId);
 
-            // Safely display basic info
             addDataLabel(left, "Gatunek: " + (d.getSpecies() != null ? d.getSpecies() : "Nieznany"));
             addDataLabel(left, String.format("Wzrost: %d cm", d.getHeight() * 10));
             addDataLabel(left, String.format("Waga: %.1f kg", d.getWeight() / 10.0));
 
-            // Safely display abilities
             JLabel abilTitle = createTitleLabel("Umiejętności:");
             left.add(abilTitle);
             if (d.getAbilities() != null && !d.getAbilities().isEmpty()) {
@@ -81,7 +75,6 @@ public class DetailsView extends JPanel {
                 addSubLabel(left, "Brak danych");
             }
 
-            // Safely display stats
             JLabel statTitle = createTitleLabel("Statystyki:");
             left.add(statTitle);
             addSubLabel(left, "HP: " + d.getHp());
@@ -93,7 +86,6 @@ public class DetailsView extends JPanel {
 
         } catch (Exception ex) {
             ErrorHandler.showError(this, ex, "wyświetlanie informacji o Pokémonie");
-            // Add fallback content
             JLabel errorLabel = new JLabel("Błąd wyświetlania danych Pokémona");
             errorLabel.setForeground(Color.RED);
             left.add(errorLabel);
@@ -101,23 +93,28 @@ public class DetailsView extends JPanel {
 
         add(left, BorderLayout.WEST);
 
-        // --- RIGHT: Image Panel ---
         try {
             createImagePanel(d);
         } catch (Exception ex) {
             ErrorHandler.showError(this, ex, "tworzenie panelu obrazu");
-            // Create a simple placeholder panel
-            JPanel placeholder = new JPanel();
+
+            JLabel errorLabel = new JLabel("<html><center><span style='color:black;'>BRAK OBRAZKA<br>W API</span></center></html>");
+            errorLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+            errorLabel.setHorizontalAlignment(JLabel.CENTER);
+            errorLabel.setVerticalAlignment(JLabel.CENTER);
+            errorLabel.setPreferredSize(new Dimension(310, 310));
+
+            JPanel placeholder = new JPanel(new GridBagLayout());
             placeholder.setOpaque(false);
-            placeholder.add(new JLabel("Brak obrazu"));
+            placeholder.setPreferredSize(new Dimension(310, 310));
+            placeholder.add(errorLabel);
+
             add(placeholder, BorderLayout.EAST);
         }
 
-        // --- Footer: Author Info ---
         try {
             createFooter();
         } catch (Exception ex) {
-            // Don't show error for footer, it's not critical
             System.err.println("Failed to create footer: " + ex.getMessage());
         }
     }
@@ -127,7 +124,7 @@ public class DetailsView extends JPanel {
         right.setOpaque(false);
         right.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JLabel imgLabel = new JLabel("Ładowanie obrazu...");
+        JLabel imgLabel = new JLabel("");
         imgLabel.setHorizontalAlignment(JLabel.RIGHT);
         imgLabel.setVerticalAlignment(JLabel.TOP);
         imgLabel.setBorder(BorderFactory.createEmptyBorder(70, 0, 0, 10));
@@ -136,12 +133,10 @@ public class DetailsView extends JPanel {
         right.add(imgLabel, BorderLayout.NORTH);
         add(right, BorderLayout.EAST);
 
-        // Load image async with error handling
         CompletableFuture.supplyAsync(() -> {
             try {
                 return ImageCache.load(String.valueOf(d.getId()));
             } catch (Exception ex) {
-                // Log the error but don't show dialog for image loading failures
                 System.err.println("Failed to load image for Pokemon " + d.getId() + ": " + ex.getMessage());
                 return null;
             }
@@ -151,22 +146,31 @@ public class DetailsView extends JPanel {
                     if (icon != null) {
                         Image scaled = icon.getImage().getScaledInstance(310, 310, Image.SCALE_SMOOTH);
                         imgLabel.setIcon(new ImageIcon(scaled));
-                        imgLabel.setText(null); // remove loading text
+                        imgLabel.setText(null);
                     } else {
-                        imgLabel.setText("Brak obrazu");
-                        imgLabel.setForeground(new Color(200, 200, 200));
+                        imgLabel.setText(String.format("<html><center><span style='%s'>BRAK OBRAZKA<br>W API</span></center></html>", UIConstants.IMG_ERR_STYLE_DETAILS));
+                        imgLabel.setHorizontalAlignment(JLabel.CENTER);
+                        imgLabel.setVerticalAlignment(JLabel.CENTER);
+                        imgLabel.setPreferredSize(new Dimension(310, 310));
+                        imgLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+                        imgLabel.setVerticalTextPosition(SwingConstants.CENTER);
+                        imgLabel.setIcon(null);
                     }
                 } catch (Exception ex) {
                     ErrorHandler.showError(this, ex, "skalowanie obrazu Pokémona");
-                    imgLabel.setText("Błąd ładowania obrazu");
-                    imgLabel.setForeground(Color.RED);
+                    imgLabel.setText(String.format("<html><center><span style='%s'>BŁĄD SKALOWANIA</span></center></html>", UIConstants.IMG_ERR_STYLE_DETAILS));
                 }
             });
         }).exceptionally(throwable -> {
             SwingUtilities.invokeLater(() -> {
                 System.err.println("Async image loading failed: " + throwable.getMessage());
-                imgLabel.setText("Błąd ładowania obrazu");
-                imgLabel.setForeground(Color.RED);
+	    	imgLabel.setText(String.format("<html><center><span style='%s'>BŁĄD ŁADOWANIA</span></center></html>", UIConstants.IMG_ERR_STYLE_DETAILS));
+                imgLabel.setHorizontalAlignment(JLabel.CENTER);
+                imgLabel.setVerticalAlignment(JLabel.CENTER);
+                imgLabel.setPreferredSize(new Dimension(310, 310));
+                imgLabel.setHorizontalTextPosition(SwingConstants.CENTER);
+                imgLabel.setVerticalTextPosition(SwingConstants.CENTER);
+                imgLabel.setIcon(null);
             });
             return null;
         });
@@ -183,11 +187,9 @@ public class DetailsView extends JPanel {
     }
 
     private void createErrorStateView(Runnable onBack) {
-        removeAll(); // Clear any partially created content
-        
+        removeAll();
         setLayout(new BorderLayout());
-        
-        // Back button
+
         JButton back = new JButton("← Wróć");
         back.setFont(new Font("SansSerif", Font.BOLD, 16));
         back.setFocusPainted(false);
@@ -208,12 +210,11 @@ public class DetailsView extends JPanel {
         top.add(back);
         add(top, BorderLayout.NORTH);
 
-        // Error message
         JLabel errorLabel = new JLabel("Nie można wyświetlić szczegółów Pokémona");
         errorLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         errorLabel.setForeground(Color.RED);
         errorLabel.setHorizontalAlignment(JLabel.CENTER);
-        
+
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
         center.add(errorLabel);

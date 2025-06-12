@@ -96,8 +96,8 @@ public class LoadingView extends JPanel {
 		    label.setHorizontalTextPosition(SwingConstants.CENTER);
 		}
 	    } catch (Exception e) {
-		spinnerLoadFailed = true;
-		System.err.println("Exception loading spinner.gif via toolkit: " + e.getMessage());
+			spinnerLoadFailed = true;
+			System.err.println("Exception loading spinner.gif via toolkit: " + e.getMessage());
 	    }
 	}
 
