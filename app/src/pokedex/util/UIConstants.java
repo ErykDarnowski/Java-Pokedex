@@ -97,7 +97,7 @@ public final class UIConstants {
         public static final String ERROR_STATS = "Błąd wyświetlania danych Pokémona";
 
         // Tooltips and placeholders
-        public static final String TOOLTIP_SEARCH = "Wyszukaj Pokémona po nazwie...";
+        public static final String TOOLTIP_SEARCH = "Wyszukaj Pokémona po nazwie lub numerze ID...";
         public static final String PLACEHOLDER_SEARCH = "Pikachu";
     }
 }
