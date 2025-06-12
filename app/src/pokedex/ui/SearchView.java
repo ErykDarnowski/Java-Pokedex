@@ -14,7 +14,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,8 @@ public class SearchView extends JPanel {
     private JPanel gridContainerPanel;
 
     private final Map<Pokemon, JPanel> pokemonPanels = new HashMap<>();
+
+	private String lastSearchTerm = ""; // Store the last searched term to fix re-render issues
 
     public SearchView(List<Pokemon> pokemons, Consumer<Pokemon> onSelect, Runnable unused) {
         this.onSelect = onSelect;
@@ -191,23 +192,39 @@ public class SearchView extends JPanel {
         return topPanel;
     }
 
-    private void filter(String term) {
-        try {
-            String actualTerm = term.equals(UIConstants.PLACEHOLDER_TEXT) ? "" : term;
+	private void filter(String term) {
+	    try {
+		// Don't filter again if the term hasn't changed
+		if (term.equals(lastSearchTerm)) return;
 
-            String t = actualTerm.trim().toLowerCase().replace("-", "");
-            current = all.stream()
-                .filter(p -> p.getName().toLowerCase().replace("-", "").contains(t))
-                .collect(Collectors.toList());
+		lastSearchTerm = term;
 
-            updateDisplayedPokemon();
-        } catch (Exception e) {
-            ErrorHandler.showError(this, e, "filtrowanie wyników wyszukiwania");
-            // Fallback to showing all Pokemon
-            current = all;
-            updateDisplayedPokemon();
-        }
-    }
+		String actualTerm = term.equals(UIConstants.PLACEHOLDER_TEXT) ? "" : term;
+		String t = actualTerm.trim().toLowerCase().replace("-", "");
+
+		List<Pokemon> filtered = all.stream()
+		    .filter(p -> {
+				String name = p.getName().toLowerCase().replace("-", "");
+				boolean nameMatches = name.contains(t);
+				boolean idMatches = false;
+				if (t.matches("\\d+")) {
+				    idMatches = String.valueOf(p.getId()).equals(t);
+				}
+				return nameMatches || idMatches;
+		    })
+		    .collect(Collectors.toList());
+
+		// Avoid redundant UI update
+		if (!filtered.equals(current)) {
+		    current = filtered;
+		    updateDisplayedPokemon();
+		}
+	    } catch (Exception e) {
+			ErrorHandler.showError(this, e, "filtrowanie wyników wyszukiwania");
+			current = all;
+			updateDisplayedPokemon();
+	    }
+	}
 
     // OPTIMIZATION: New method to update displayed Pokemon with batch loading
     private void updateDisplayedPokemon() {

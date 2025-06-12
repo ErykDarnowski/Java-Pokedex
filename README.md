@@ -6,7 +6,6 @@ A Java + Swing Pokedex (a final project for the Programming languages and paradi
 
 ## TODO
 
-- Search by ID too?
 - Flesh out fonts + colors, use of UIConstants
 - Test out
 - Send over
