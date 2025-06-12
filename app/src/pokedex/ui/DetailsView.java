@@ -59,30 +59,31 @@ public class DetailsView extends JPanel {
             nameAndId.setBorder(new EmptyBorder(0, 0, 15, 0));
             left.add(nameAndId);
 
-            addDataLabel(left, "Gatunek: " + (d.getSpecies() != null ? d.getSpecies() : "Nieznany"));
-            addDataLabel(left, String.format("Wzrost: %d cm", d.getHeight() * 10));
-            addDataLabel(left, String.format("Waga: %.1f kg", d.getWeight() / 10.0));
+            // Enhanced data labels with styled values
+            addStyledDataLabel(left, "Gatunek", d.getSpecies() != null ? d.getSpecies() : "Nieznany");
+            addStyledDataLabel(left, "Wzrost", String.format("%d cm", d.getHeight() * 10));
+            addStyledDataLabel(left, "Waga", String.format("%.1f kg", d.getWeight() / 10.0));
 
             JLabel abilTitle = createTitleLabel("Umiejętności:");
             left.add(abilTitle);
             if (d.getAbilities() != null && !d.getAbilities().isEmpty()) {
                 for (String ab : d.getAbilities()) {
                     if (ab != null && !ab.trim().isEmpty()) {
-                        addSubLabel(left, ab);
+                        addStyledSubLabel(left, ab);
                     }
                 }
             } else {
-                addSubLabel(left, "Brak danych");
+                addStyledSubLabel(left, "Brak danych");
             }
 
             JLabel statTitle = createTitleLabel("Statystyki:");
             left.add(statTitle);
-            addSubLabel(left, "HP: " + d.getHp());
-            addSubLabel(left, "Atak: " + d.getAttack());
-            addSubLabel(left, "Obrona: " + d.getDefense());
-            addSubLabel(left, "Szybkość: " + d.getSpeed());
-            addSubLabel(left, "Atak specjalny: " + d.getSpAttack());
-            addSubLabel(left, "Obrona specjalna: " + d.getSpDefense());
+            addStyledSubLabel(left, "HP", String.valueOf(d.getHp()));
+            addStyledSubLabel(left, "Atak", String.valueOf(d.getAttack()));
+            addStyledSubLabel(left, "Obrona", String.valueOf(d.getDefense()));
+            addStyledSubLabel(left, "Szybkość", String.valueOf(d.getSpeed()));
+            addStyledSubLabel(left, "Atak specjalny", String.valueOf(d.getSpAttack()));
+            addStyledSubLabel(left, "Obrona specjalna", String.valueOf(d.getSpDefense()));
 
         } catch (Exception ex) {
             ErrorHandler.showError(this, ex, "wyświetlanie informacji o Pokémonie");
@@ -224,6 +225,31 @@ public class DetailsView extends JPanel {
         repaint();
     }
 
+    // Enhanced method for styling data labels with HTML formatting
+    private void addStyledDataLabel(JPanel parent, String label, String value) {
+        try {
+            String safeLabel = label != null ? label : "Brak etykiety";
+            String safeValue = value != null ? value : "Brak danych";
+            
+            // Get font family name from UIConstants for values
+            String valueFontFamily = UIConstants.FONT_HIGHLIGHT_DETAILS.getFontName();
+            
+            // Using HTML to style the value part differently with custom font
+            String htmlText = String.format(
+                "<html>%s: <span style='color: #90EE90; font-weight: bold; font-family: %s;'>%s</span></html>", 
+                safeLabel, valueFontFamily, safeValue
+            );
+            
+            JLabel lab = new JLabel(htmlText);
+            lab.setFont(UIConstants.FONT_MONO_LARGE);
+            lab.setForeground(new Color(240, 240, 240));
+            parent.add(lab);
+        } catch (Exception ex) {
+            System.err.println("Error adding styled data label: " + ex.getMessage());
+        }
+    }
+
+    // Original method for backward compatibility
     private void addDataLabel(JPanel parent, String text) {
         try {
             JLabel lab = new JLabel(text != null ? text : "Brak danych");
@@ -247,6 +273,54 @@ public class DetailsView extends JPanel {
         }
     }
 
+    // Enhanced method for styling sub labels with bullets
+    private void addStyledSubLabel(JPanel parent, String text) {
+        try {
+            String safeText = text != null ? text : "Brak danych";
+            
+            // Get font family name from UIConstants for values
+            String valueFontFamily = UIConstants.FONT_HIGHLIGHT_DETAILS.getFontName();
+            
+            // Using HTML to style just the value, keeping bullet normal color
+            String htmlText = String.format(
+                "<html>&nbsp;&nbsp;&nbsp;&nbsp;• <span style='color: #87CEEB; font-weight: bold; font-family: %s;'>%s</span></html>", 
+                valueFontFamily, safeText
+            );
+            
+            JLabel lab = new JLabel(htmlText);
+            lab.setFont(UIConstants.FONT_MONO_MED);
+            lab.setForeground(new Color(220, 220, 220));
+            parent.add(lab);
+        } catch (Exception ex) {
+            System.err.println("Error adding styled sub label: " + ex.getMessage());
+        }
+    }
+
+    // Overloaded method for statistics with separate label and value
+    private void addStyledSubLabel(JPanel parent, String label, String value) {
+        try {
+            String safeLabel = label != null ? label : "Brak etykiety";
+            String safeValue = value != null ? value : "Brak danych";
+            
+            // Get font family name from UIConstants for values
+            String valueFontFamily = UIConstants.FONT_HIGHLIGHT_DETAILS.getFontName();
+            
+            // Using HTML to style just the value, keeping bullet and label normal color
+            String htmlText = String.format(
+                "<html>&nbsp;&nbsp;&nbsp;&nbsp;• %s: <span style='color: #F0E68C; font-weight: bold; font-size: 110%%; font-family: %s;'>%s</span></html>", 
+                safeLabel, valueFontFamily, safeValue
+            );
+            
+            JLabel lab = new JLabel(htmlText);
+            lab.setFont(UIConstants.FONT_MONO_MED);
+            lab.setForeground(new Color(220, 220, 220));
+            parent.add(lab);
+        } catch (Exception ex) {
+            System.err.println("Error adding styled sub label with separate value: " + ex.getMessage());
+        }
+    }
+
+    // Original method for backward compatibility
     private void addSubLabel(JPanel parent, String text) {
         try {
             JLabel lab = new JLabel("    • " + (text != null ? text : "Brak danych"));
