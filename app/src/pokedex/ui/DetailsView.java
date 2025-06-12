@@ -241,8 +241,9 @@ public class DetailsView extends JPanel {
         JLabel authorLabel = new JLabel(UIConstants.Strings.AUTHOR);
         authorLabel.setForeground(UIConstants.Colors.TEXT_PRIMARY);
 
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         footerPanel.setOpaque(false);
+        footerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         footerPanel.add(authorLabel);
         
         add(footerPanel, BorderLayout.SOUTH);
